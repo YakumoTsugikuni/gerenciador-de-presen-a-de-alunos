@@ -1,0 +1,17 @@
+{
+  "name": "gerenciador-presenca-alunos",
+  "version": "1.0.0",
+  "description": "Gerenciador de alunos, cursos e presencas",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "sql.js": "^1.13.0",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

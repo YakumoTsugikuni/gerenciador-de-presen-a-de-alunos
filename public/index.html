@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presenca | Gestao academica</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">P</span><span>presenca</span></div>
+    <nav>
+      <button class="nav-item active" data-view="overview"><span>◈</span> Visao geral</button>
+      <button class="nav-item" data-view="students"><span>◎</span> Alunos</button>
+      <button class="nav-item" data-view="courses"><span>▦</span> Cursos</button>
+      <button class="nav-item" data-view="attendance"><span>✓</span> Presencas</button>
+    </nav>
+    <div class="sidebar-footer"><small>PAINEL ACADEMICO</small><p>Organize sua turma com clareza.</p></div>
+  </aside>
+
+  <main class="content">
+    <header class="topbar"><div><p class="eyebrow">QUARTA-FEIRA, 19 DE AGOSTO</p><h1 id="page-title">Visao geral</h1></div><div class="status-dot"><i></i> Sistema online</div></header>
+    <section id="overview" class="view active-view">
+      <div class="welcome"><div><span class="eyebrow">ACOMPANHAMENTO EM UM SO LUGAR</span><h2>Uma turma presente<br><em>comeca aqui.</em></h2><p>Cadastre alunos, organize cursos e acompanhe a frequencia do seu jeito.</p></div><div class="welcome-shape">✦</div></div>
+      <div class="stats"><article><span class="stat-icon coral">◎</span><div><small>ALUNOS ATIVOS</small><strong id="student-count">0</strong></div></article><article><span class="stat-icon blue">▦</span><div><small>CURSOS</small><strong id="course-count">0</strong></div></article><article><span class="stat-icon green">✓</span><div><small>PRESENCAS</small><strong id="present-count">0</strong></div></article><article><span class="stat-icon yellow">!</span><div><small>AUSENCIAS</small><strong id="absent-count">0</strong></div></article></div>
+      <div class="overview-grid"><section class="panel"><div class="panel-heading"><div><span class="eyebrow">ACAO RAPIDA</span><h3>Registrar presenca</h3></div><span class="panel-mark">✓</span></div><form id="attendance-form" class="form-grid"><label>Aluno<select name="student_id" id="attendance-student" required></select></label><label>Curso<select name="course_id" id="attendance-course" required></select></label><label>Data<input type="date" name="attendance_date" required></label><label>Status<select name="status"><option value="present">Presente</option><option value="absent">Ausente</option></select></label><button class="primary" type="submit">Salvar registro <span>→</span></button></form></section><section class="panel recent"><div class="panel-heading"><div><span class="eyebrow">ULTIMOS REGISTROS</span><h3>Atividade recente</h3></div><button class="text-button" data-view="attendance">Ver tudo →</button></div><div id="recent-list" class="record-list"><p class="empty">Nenhum registro ainda.</p></div></section></div>
+    </section>
+    <section id="students" class="view"><div class="section-head"><div><span class="eyebrow">CADASTRO</span><h2>Alunos</h2></div><button class="primary" data-open="student-modal">+ Novo aluno</button></div><div class="panel table-panel"><table><thead><tr><th>Nome</th><th>Idade</th><th>E-mail</th><th></th></tr></thead><tbody id="students-table"></tbody></table></div></section>
+    <section id="courses" class="view"><div class="section-head"><div><span class="eyebrow">CATALOGO</span><h2>Cursos</h2></div><button class="primary" data-open="course-modal">+ Novo curso</button></div><div class="course-grid" id="courses-grid"></div></section>
+    <section id="attendance" class="view"><div class="section-head"><div><span class="eyebrow">HISTORICO</span><h2>Presencas</h2></div></div><div class="panel table-panel"><table><thead><tr><th>Data</th><th>Aluno</th><th>Curso</th><th>Status</th></tr></thead><tbody id="attendance-table"></tbody></table></div></section>
+  </main>
+  <div id="toast" class="toast"></div>
+  <dialog id="student-modal"><form method="dialog" id="student-form"><button class="close" value="cancel">×</button><span class="eyebrow">NOVO CADASTRO</span><h2>Adicionar aluno</h2><label>Nome<input name="name" required placeholder="Nome completo"></label><label>Idade<input name="age" type="number" min="1" max="129" required placeholder="18"></label><label>E-mail<input name="email" type="email" required placeholder="aluno@email.com"></label><button class="primary" type="submit">Cadastrar aluno</button></form></dialog>
+  <dialog id="course-modal"><form method="dialog" id="course-form"><button class="close" value="cancel">×</button><span class="eyebrow">NOVO CURSO</span><h2>Adicionar curso</h2><label>Titulo<input name="title" required placeholder="Ex.: Matematica aplicada"></label><label>Duracao (horas)<input name="duration" type="number" min="1" required placeholder="40"></label><label>Descricao<textarea name="description" placeholder="Uma breve descricao"></textarea></label><button class="primary" type="submit">Cadastrar curso</button></form></dialog>
+  <script src="/app.js"></script>
+</body>
+</html>
