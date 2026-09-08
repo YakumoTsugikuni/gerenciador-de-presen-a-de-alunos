@@ -3,6 +3,10 @@ const path = require('path');
 const studentsRouter = require('./routes/students');
 const coursesRouter = require('./routes/courses');
 const attendanceRouter = require('./routes/attendance');
+const authRouter = require('./routes/auth');
+const historyRouter = require('./routes/history');
+const reportsRouter = require('./routes/reports');
+const usersRouter = require('./routes/users');
 const db = require('./db');
 
 const app = express();
@@ -25,6 +29,10 @@ app.get('/api/summary', (req, res) => {
 app.use('/api/students', studentsRouter);
 app.use('/api/courses', coursesRouter);
 app.use('/api/attendance', attendanceRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/history', historyRouter);
+app.use('/api/reports', reportsRouter);
+app.use('/api/users', usersRouter);
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
