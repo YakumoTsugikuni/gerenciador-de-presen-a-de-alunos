@@ -1,5 +1,40 @@
 const state = { students: [], courses: [], attendance: [] };
 const $ = (selector) => document.querySelector(selector);
+// Overlay control for auth modals: show overlay then open dialog to hide app content
+window.showAuthModal = function(id) {
+  const overlay = document.getElementById('auth-overlay');
+  const dlg = document.getElementById(id);
+  if (!dlg) return;
+  // show overlay (fade in)
+  overlay.classList.add('visible');
+  // hide main UI from assistive tech while overlay is active
+  document.querySelector('main')?.setAttribute('aria-hidden', 'true');
+  document.querySelector('aside')?.setAttribute('aria-hidden', 'true');
+  // ensure paint then open dialog so overlay hides background before dialog appears
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    try { dlg.showModal(); } catch(e) { /* ignore if already open */ }
+    // when dialog closes, hide overlay if no other dialogs are open
+    const onClose = () => {
+      // small timeout to allow dialog close animation to finish
+      setTimeout(() => {
+        if (document.querySelectorAll('dialog[open]').length === 0) overlay.classList.remove('visible');
+        // restore aria-hidden
+        document.querySelector('main')?.removeAttribute('aria-hidden');
+        document.querySelector('aside')?.removeAttribute('aria-hidden');
+      }, 10);
+    };
+    dlg.addEventListener('close', onClose, { once: true });
+  }));
+};
+
+// Safe hide API in case code wants to close dialogs programmatically
+window.hideAuthOverlay = function() {
+  const overlay = document.getElementById('auth-overlay');
+  if (!overlay) return;
+  overlay.classList.remove('visible');
+  document.querySelector('main')?.removeAttribute('aria-hidden');
+  document.querySelector('aside')?.removeAttribute('aria-hidden');
+};
 const api = async (url, options = {}) => {
   const token = localStorage.getItem('token');
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
@@ -20,7 +55,7 @@ async function load() {
   }
   if (!state.user) {
     // show login modal and do not load data
-    document.getElementById('login-modal')?.showModal();
+    window.showAuthModal && window.showAuthModal('login-modal');
     document.getElementById('user-name').textContent = '';
     document.getElementById('logout-link').style.display = 'none';
     return;
@@ -162,7 +197,7 @@ function toast(message, error = false) { const element = $('#toast'); element.te
 
 document.addEventListener('click', async (event) => {
   const viewButton = event.target.closest('[data-view]'); if (viewButton) showView(viewButton.dataset.view);
-  const openButton = event.target.closest('[data-open]'); if (openButton) $(`#${openButton.dataset.open}`).showModal();
+  const openButton = event.target.closest('[data-open]'); if (openButton) window.showAuthModal ? window.showAuthModal(openButton.dataset.open) : $(`#${openButton.dataset.open}`).showModal();
   const studentId = event.target.closest('[data-delete-student]')?.dataset.deleteStudent; const courseId = event.target.closest('[data-delete-course]')?.dataset.deleteCourse;
   try { if (studentId && confirm('Excluir este aluno?')) { await api(`students/${studentId}`, { method: 'DELETE' }); await load(); toast('Aluno excluido.'); } if (courseId && confirm('Excluir este curso?')) { await api(`courses/${courseId}`, { method: 'DELETE' }); await load(); toast('Curso excluido.'); } } catch (error) { toast(error.message, true); }
 });
@@ -209,7 +244,7 @@ if (registerForm) registerForm.addEventListener('submit', async (e) => {
     registerForm.closest('dialog')?.close();
     registerForm.reset();
     // open login modal
-    document.getElementById('login-modal')?.showModal();
+    window.showAuthModal && window.showAuthModal('login-modal');
     toast(resp.message || 'Conta criada com sucesso.');
   } catch (err) {
     toast(err.message, true);
@@ -235,13 +270,13 @@ if (attendanceForm) attendanceForm.addEventListener('submit', async (event) => {
 
 setDateMax();
 // logout link
-document.getElementById('logout-link')?.addEventListener('click', (e) => {
+  document.getElementById('logout-link')?.addEventListener('click', (e) => {
   e.preventDefault();
   localStorage.removeItem('token');
   state.user = null;
   document.getElementById('user-name').textContent = '';
   document.getElementById('logout-link').style.display = 'none';
-  document.getElementById('login-modal')?.showModal();
+  window.showAuthModal && window.showAuthModal('login-modal');
 });
 
 // Update UI on successful load

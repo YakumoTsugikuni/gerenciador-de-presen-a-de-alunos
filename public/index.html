@@ -27,6 +27,8 @@
       <div style="margin-top:8px"><button class="text-button" data-open="login-modal">Entrar</button></div>
     </div>
   </aside>
+  <!-- Overlay usado para ocultar a aplicação durante telas de autenticação -->
+  <div id="auth-overlay" aria-hidden="true"></div>
 
   <main class="content">
     <header class="topbar"><div><p class="eyebrow">QUARTA-FEIRA, 19 DE AGOSTO</p><h1 id="page-title">Visao geral</h1></div><div style="display:flex;align-items:center;gap:12px"><div id="user-info" style="display:flex;flex-direction:column;text-align:right"><small id="user-name"></small><a href="#" id="logout-link" style="font-size:12px;display:none">Sair</a></div><div class="status-dot"><i></i> Sistema online</div></div></header>
@@ -51,7 +53,7 @@
     document.addEventListener('click', (e) => {
       if (e.target && e.target.id === 'open-register') {
         document.getElementById('login-modal')?.close();
-        document.getElementById('register-modal')?.showModal();
+        if (window.showAuthModal) window.showAuthModal('register-modal'); else document.getElementById('register-modal')?.showModal();
       }
     });
   </script>
