@@ -57,3 +57,36 @@ Sem licença especificada neste repositório. Adicione um arquivo `LICENSE` se q
 Contato
 -------
 Se precisar de ajuda com a configuração ou quiser orientações para estender o projeto, descreva o que deseja fazer e eu ajudo.
+
+Atualizações recentes
+---------------------
+- Implementado: autenticação (login/registro), auditoria de alterações de presença, dashboard, histórico e relatórios com exportação CSV.
+- Validação de datas: o sistema impede registrar/alterar presenças para datas futuras (validação no frontend e backend).
+
+Configuração importante
+-----------------------
+- Defina variáveis de ambiente para produção/segurança antes de executar o servidor:
+	- `JWT_SECRET` — segredo para assinar tokens JWT (obrigatório em produção).
+	- `FIRST_ADMIN_USERNAME` e `FIRST_ADMIN_PASSWORD` — (opcional) criar o usuário admin inicial no primeiro start.
+- O arquivo de banco de dados local está em `data/presenca.sqlite`. Por padrão foi adicionado ao `.gitignore` para não ser comitado.
+
+Comandos úteis
+---------------
+- Instalar dependências:
+
+```bash
+npm install
+```
+
+- Rodar em desenvolvimento (com nodemon, se instalado globalmente):
+
+```bash
+npm run dev
+# ou
+node server.js
+```
+
+Notas sobre branches e commits
+-----------------------------
+- Este repositório agora possui uma branch de recurso `feature/dashboard-history` contendo as implementações de dashboard/histórico/relatórios.
+- Se você deseja aplicar a mesma atualização de documentação em outras branches locais, o script de automação pode cherry-pickar o commit atual para cada branch local (atenção a conflitos em branches muito divergentes).
