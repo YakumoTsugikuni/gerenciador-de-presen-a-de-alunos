@@ -8,8 +8,13 @@ window.showAuthModal = function(id) {
   // show overlay (fade in)
   overlay.classList.add('visible');
   // hide main UI from assistive tech while overlay is active
-  document.querySelector('main')?.setAttribute('aria-hidden', 'true');
-  document.querySelector('aside')?.setAttribute('aria-hidden', 'true');
+  const mainEl = document.querySelector('main');
+  const asideEl = document.querySelector('aside');
+  mainEl?.setAttribute('aria-hidden', 'true');
+  asideEl?.setAttribute('aria-hidden', 'true');
+  // add visual blur to underlying UI for extra obscuring of sensitive content
+  mainEl?.classList.add('blurred');
+  asideEl?.classList.add('blurred');
   // ensure paint then open dialog so overlay hides background before dialog appears
   requestAnimationFrame(() => requestAnimationFrame(() => {
     try { dlg.showModal(); } catch(e) { /* ignore if already open */ }
@@ -17,10 +22,13 @@ window.showAuthModal = function(id) {
     const onClose = () => {
       // small timeout to allow dialog close animation to finish
       setTimeout(() => {
-        if (document.querySelectorAll('dialog[open]').length === 0) overlay.classList.remove('visible');
-        // restore aria-hidden
-        document.querySelector('main')?.removeAttribute('aria-hidden');
-        document.querySelector('aside')?.removeAttribute('aria-hidden');
+        if (document.querySelectorAll('dialog[open]').length === 0) {
+          overlay.classList.remove('visible');
+          // restore aria-hidden and remove blur
+          const m = document.querySelector('main'); const a = document.querySelector('aside');
+          m?.removeAttribute('aria-hidden'); a?.removeAttribute('aria-hidden');
+          m?.classList.remove('blurred'); a?.classList.remove('blurred');
+        }
       }, 10);
     };
     dlg.addEventListener('close', onClose, { once: true });
@@ -32,8 +40,9 @@ window.hideAuthOverlay = function() {
   const overlay = document.getElementById('auth-overlay');
   if (!overlay) return;
   overlay.classList.remove('visible');
-  document.querySelector('main')?.removeAttribute('aria-hidden');
-  document.querySelector('aside')?.removeAttribute('aria-hidden');
+  const m = document.querySelector('main'); const a = document.querySelector('aside');
+  m?.removeAttribute('aria-hidden'); a?.removeAttribute('aria-hidden');
+  m?.classList.remove('blurred'); a?.classList.remove('blurred');
 };
 const api = async (url, options = {}) => {
   const token = localStorage.getItem('token');

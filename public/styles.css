@@ -26,3 +26,15 @@ dialog {
 dialog::backdrop { background: transparent; }
 dialog[open] { transform-origin: center top; animation: dialogPop 180ms ease-out; }
 @keyframes dialogPop { from { opacity: 0; transform: translateY(-6px) scale(0.995); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* Blur state applied to main UI while auth overlay is visible. Kept performant and subtle. */
+.blurred {
+	-webkit-filter: blur(6px) saturate(0.96);
+	filter: blur(6px) saturate(0.96);
+	transition: filter 220ms ease-in-out, -webkit-filter 220ms ease-in-out;
+	will-change: filter;
+}
+
+@media (max-width: 800px) {
+	.blurred { -webkit-filter: blur(4px) saturate(0.96); filter: blur(4px) saturate(0.96); }
+}
