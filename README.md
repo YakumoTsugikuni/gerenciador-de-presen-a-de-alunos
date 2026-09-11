@@ -63,15 +63,7 @@ Se precisar de ajuda com a configuração ou quiser orientações para estender 
 
 Atualizações recentes
 ---------------------
-- Implementado: autenticação, cadastro, dashboard, histórico, relatórios CSV, auditoria e alteração de senha.
-- Sessões usam cookies HttpOnly; tokens Bearer continuam aceitos para compatibilidade com clientes externos.
-- Presenças não podem ser registradas para datas futuras ou inexistentes.
 
-Configuração importante
------------------------
-- Em produção, defina `JWT_SECRET`, `FIRST_ADMIN_USERNAME` e `FIRST_ADMIN_PASSWORD` antes de executar o servidor.
-- Em desenvolvimento, o segredo JWT é gerado aleatoriamente e uma senha temporária é exibida no terminal apenas ao criar ou migrar o administrador inicial.
-- O arquivo de banco de dados local está em `data/presenca.sqlite` e é ignorado pelo Git.
 
 Comandos úteis
 ---------------
@@ -89,11 +81,6 @@ npm run dev
 node server.js
 ```
 
-- Executar testes:
-
-```bash
-npm test
-```
 
 Notas sobre branches e commits
 -----------------------------
