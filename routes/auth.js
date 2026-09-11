@@ -3,9 +3,10 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const db = require('../db');
 const { jwtSecret, getToken, setAuthCookie, clearAuthCookie } = require('../config/auth');
+const rateLimit = require('../middleware/rateLimit');
 const router = express.Router();
 
-router.post('/login', (req, res) => {
+router.post('/login', rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }), (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Usuario e senha sao obrigatorios.' });
   const user = db.get('SELECT * FROM users WHERE username = ?', [username]);
@@ -17,7 +18,7 @@ router.post('/login', (req, res) => {
   res.json({ user: { id: user.id, username: user.username, display_name: user.display_name, is_admin: !!user.is_admin } });
 });
 
-router.post('/register', (req, res) => {
+router.post('/register', rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }), (req, res) => {
   const { display_name, username, password, password_confirm } = req.body;
   if (!display_name || !username || !password || !password_confirm) return res.status(400).json({ error: 'Todos os campos sao obrigatorios.' });
   if (String(password).length < 6) return res.status(400).json({ error: 'Senha precisa ter ao menos 6 caracteres.' });
