@@ -8,6 +8,7 @@ const historyRouter = require('./routes/history');
 const reportsRouter = require('./routes/reports');
 const usersRouter = require('./routes/users');
 const db = require('./db');
+const auth = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,7 +16,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/api/summary', (req, res) => {
+app.get('/api/summary', auth, (req, res) => {
   const summary = db.get(`
     SELECT
       (SELECT COUNT(*) FROM students) AS students,

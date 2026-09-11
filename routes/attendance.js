@@ -3,6 +3,8 @@ const db = require('../db');
 const auth = require('../middleware/auth');
 const router = express.Router();
 
+router.use(auth);
+
 router.get('/', (req, res) => {
   const rows = db.all(`
     SELECT attendance.*, students.name AS student_name, courses.title AS course_title, users.username AS recorded_by_user
@@ -15,7 +17,7 @@ router.get('/', (req, res) => {
   res.json(rows);
 });
 
-router.post('/', auth, (req, res) => {
+router.post('/', (req, res) => {
   const { student_id, course_id, attendance_date, status, note } = req.body;
   if (!student_id || !course_id || !attendance_date || !['present', 'absent'].includes(status)) {
     return res.status(400).json({ error: 'Aluno, curso, data e status sao obrigatorios.' });
@@ -43,7 +45,7 @@ router.post('/', auth, (req, res) => {
   }
 });
 
-router.delete('/:id', auth, (req, res) => {
+router.delete('/:id', (req, res) => {
   const id = req.params.id;
   const existing = db.get('SELECT * FROM attendance WHERE id = ?', [id]);
   if (!existing) return res.status(404).json({ error: 'Registro nao encontrado.' });
