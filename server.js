@@ -7,6 +7,7 @@ const authRouter = require('./routes/auth');
 const historyRouter = require('./routes/history');
 const reportsRouter = require('./routes/reports');
 const usersRouter = require('./routes/users');
+const auditRouter = require('./routes/audit');
 const db = require('./db');
 const auth = require('./middleware/auth');
 
@@ -34,6 +35,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/history', historyRouter);
 app.use('/api/reports', reportsRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/audit', auditRouter);
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

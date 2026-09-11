@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const db = require('../db');
 const { jwtSecret, getToken, setAuthCookie, clearAuthCookie } = require('../config/auth');
 const rateLimit = require('../middleware/rateLimit');
+const auth = require('../middleware/auth');
 const router = express.Router();
 
 router.post('/login', rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }), (req, res) => {
@@ -53,6 +54,17 @@ router.get('/me', (req, res) => {
 router.post('/logout', (req, res) => {
   clearAuthCookie(res);
   res.status(204).end();
+});
+
+router.post('/change-password', auth, (req, res) => {
+  const { current_password, new_password, new_password_confirm } = req.body;
+  if (!current_password || !new_password || !new_password_confirm) return res.status(400).json({ error: 'Todos os campos sao obrigatorios.' });
+  if (new_password.length < 6) return res.status(400).json({ error: 'Senha precisa ter ao menos 6 caracteres.' });
+  if (new_password !== new_password_confirm) return res.status(400).json({ error: 'As senhas nao conferem.' });
+  const user = db.get('SELECT password FROM users WHERE id = ?', [req.user.id]);
+  if (!user || !bcrypt.compareSync(current_password, user.password)) return res.status(401).json({ error: 'Senha atual invalida.' });
+  db.run('UPDATE users SET password = ? WHERE id = ?', [bcrypt.hashSync(new_password, 10), req.user.id]);
+  res.json({ message: 'Senha alterada com sucesso.' });
 });
 
 module.exports = router;

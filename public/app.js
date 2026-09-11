@@ -135,6 +135,13 @@ async function loadUsers() {
   } catch (err) { /* ignore if not admin */ }
 }
 
+async function loadAudit() {
+  try {
+    const rows = await api('audit');
+    document.getElementById('audit-table').innerHTML = rows.map(row => `<tr><td>${escapeHtml(row.created_at)}</td><td>${escapeHtml(row.action)}</td><td>${escapeHtml(row.display_name || row.username || '')}</td><td>${escapeHtml(row.student_name || '')}</td><td>${escapeHtml(row.course_title || '')}</td><td>${escapeHtml(row.status || row.previous_status || '')}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">Nenhum evento registrado.</td></tr>';
+  } catch (err) { toast(err.message, true); }
+}
+
 // populate course and user selects
 async function fillFilters() {
   try {
@@ -194,10 +201,12 @@ async function postLoadSetup() {
   await fillFilters();
   await loadHistory();
   await loadUsers();
+  document.getElementById('profile-info').textContent = `${state.user.display_name || state.user.username} (${state.user.username})`;
   // show admin nav items if user is admin
   if (state.user && state.user.is_admin) {
     document.getElementById('nav-users').style.display = 'block';
     document.getElementById('nav-audit').style.display = 'block';
+    await loadAudit();
   } else {
     document.getElementById('nav-users').style.display = 'none';
     document.getElementById('nav-audit').style.display = 'none';
@@ -208,7 +217,7 @@ async function postLoadSetup() {
 // start() calls load(), which returns early if not authenticated. so we call postLoadSetup inside start after load.
 function fillSelect(selector, items, placeholder) { $(selector).innerHTML = `<option value="">${escapeHtml(placeholder)}</option>` + items.map(item => `<option value="${item.id}">${escapeHtml(item.name || item.title)}</option>`).join(''); }
 function formatDate(date) { return new Date(`${date}T12:00:00`).toLocaleDateString('pt-BR'); }
-function showView(view) { document.querySelectorAll('.view').forEach(item => item.classList.toggle('active-view', item.id === view)); document.querySelectorAll('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.view === view)); $('#page-title').textContent = { overview: 'Visao geral', students: 'Alunos', courses: 'Cursos', attendance: 'Presencas' }[view]; }
+function showView(view) { document.querySelectorAll('.view').forEach(item => item.classList.toggle('active-view', item.id === view)); document.querySelectorAll('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.view === view)); $('#page-title').textContent = { overview: 'Visao geral', students: 'Alunos', courses: 'Cursos', attendance: 'Presencas', history: 'Historico de chamadas', reports: 'Relatorios', users: 'Gerenciar usuarios', audit: 'Auditoria', profile: 'Perfil' }[view] || 'Visao geral'; }
 function toast(message, error = false) { const element = $('#toast'); element.textContent = message; element.className = `toast visible ${error ? 'error' : ''}`; setTimeout(() => element.className = 'toast', 2800); }
 
 document.addEventListener('click', async (event) => {
@@ -241,6 +250,19 @@ if (loginForm) loginForm.addEventListener('submit', async (e) => {
   } catch (err) {
     toast(err.message, true);
   }
+});
+
+document.getElementById('change-password')?.addEventListener('click', () => window.showAuthModal('password-modal'));
+document.getElementById('password-form')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const form = event.target;
+  try {
+    const payload = Object.fromEntries(new FormData(form));
+    const response = await api('auth/change-password', { method: 'POST', body: JSON.stringify(payload) });
+    form.closest('dialog')?.close();
+    form.reset();
+    toast(response.message);
+  } catch (error) { toast(error.message, true); }
 });
 
 // Register form handler
