@@ -54,6 +54,16 @@ const api = async (url, options = {}) => {
   return data;
 };
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  })[character]);
+}
+
 async function load() {
   // require authentication first
   try {
@@ -76,10 +86,10 @@ async function load() {
   render();
 }
 function render() {
-  $('#students-table').innerHTML = state.students.map(student => `<tr><td><strong>${student.name}</strong></td><td>${student.age} anos</td><td>${student.email}</td><td><button class="icon-button" data-delete-student="${student.id}" title="Excluir aluno">×</button></td></tr>`).join('') || '<tr><td colspan="4" class="empty">Nenhum aluno cadastrado.</td></tr>';
-  $('#courses-grid').innerHTML = state.courses.map(course => `<article class="course-card"><div class="course-number">${String(course.id).padStart(2, '0')}</div><div><h3>${course.title}</h3><p>${course.description || 'Sem descricao cadastrada.'}</p><span>${course.duration} horas</span></div><button class="icon-button" data-delete-course="${course.id}" title="Excluir curso">×</button></article>`).join('') || '<p class="empty">Nenhum curso cadastrado.</p>';
-  $('#attendance-table').innerHTML = state.attendance.map(item => `<tr><td>${formatDate(item.attendance_date)}</td><td><strong>${item.student_name}</strong></td><td>${item.course_title}</td><td><span class="badge ${item.status}">${item.status === 'present' ? 'Presente' : 'Ausente'}</span></td></tr>`).join('') || '<tr><td colspan="4" class="empty">Nenhuma presenca registrada.</td></tr>';
-  $('#recent-list').innerHTML = state.attendance.slice(0, 4).map(item => `<div class="record"><span class="record-avatar">${item.student_name.charAt(0)}</span><div><strong>${item.student_name}</strong><small>${item.course_title} · ${formatDate(item.attendance_date)}</small></div><span class="badge ${item.status}">${item.status === 'present' ? 'Presente' : 'Ausente'}</span></div>`).join('') || '<p class="empty">Nenhum registro ainda.</p>';
+  $('#students-table').innerHTML = state.students.map(student => `<tr><td><strong>${escapeHtml(student.name)}</strong></td><td>${escapeHtml(student.age)} anos</td><td>${escapeHtml(student.email)}</td><td><button class="icon-button" data-delete-student="${student.id}" title="Excluir aluno">×</button></td></tr>`).join('') || '<tr><td colspan="4" class="empty">Nenhum aluno cadastrado.</td></tr>';
+  $('#courses-grid').innerHTML = state.courses.map(course => `<article class="course-card"><div class="course-number">${String(course.id).padStart(2, '0')}</div><div><h3>${escapeHtml(course.title)}</h3><p>${escapeHtml(course.description || 'Sem descricao cadastrada.')}</p><span>${escapeHtml(course.duration)} horas</span></div><button class="icon-button" data-delete-course="${course.id}" title="Excluir curso">×</button></article>`).join('') || '<p class="empty">Nenhum curso cadastrado.</p>';
+  $('#attendance-table').innerHTML = state.attendance.map(item => `<tr><td>${escapeHtml(formatDate(item.attendance_date))}</td><td><strong>${escapeHtml(item.student_name)}</strong></td><td>${escapeHtml(item.course_title)}</td><td><span class="badge ${escapeHtml(item.status)}">${item.status === 'present' ? 'Presente' : 'Ausente'}</span></td></tr>`).join('') || '<tr><td colspan="4" class="empty">Nenhuma presenca registrada.</td></tr>';
+  $('#recent-list').innerHTML = state.attendance.slice(0, 4).map(item => `<div class="record"><span class="record-avatar">${escapeHtml(item.student_name?.charAt(0))}</span><div><strong>${escapeHtml(item.student_name)}</strong><small>${escapeHtml(item.course_title)} · ${escapeHtml(formatDate(item.attendance_date))}</small></div><span class="badge ${escapeHtml(item.status)}">${item.status === 'present' ? 'Presente' : 'Ausente'}</span></div>`).join('') || '<p class="empty">Nenhum registro ainda.</p>';
   fillSelect('#attendance-student', state.students, 'Selecione um aluno'); fillSelect('#attendance-course', state.courses, 'Selecione um curso');
 }
 
@@ -115,7 +125,7 @@ async function loadHistory(page = 1) {
     q.set('page', page);
     const resp = await api(`history?${q.toString()}`);
     const tbody = document.getElementById('history-table');
-    tbody.innerHTML = resp.data.map(r => `<tr><td>${r.attendance_date}</td><td>${r.course_title}</td><td>${r.total_present}</td><td>${r.total_absent}</td><td>${r.percent}%</td><td>${r.recorded_by_user || ''}</td><td><button class="text-button" data-detail-course="${r.course_id}" data-detail-date="${r.attendance_date}">Ver</button></td></tr>`).join('') || '<tr><td colspan="7" class="empty">Nenhuma chamada encontrada.</td></tr>';
+    tbody.innerHTML = resp.data.map(r => `<tr><td>${escapeHtml(r.attendance_date)}</td><td>${escapeHtml(r.course_title)}</td><td>${escapeHtml(r.total_present)}</td><td>${escapeHtml(r.total_absent)}</td><td>${escapeHtml(r.percent)}%</td><td>${escapeHtml(r.recorded_by_user || '')}</td><td><button class="text-button" data-detail-course="${r.course_id}" data-detail-date="${escapeHtml(r.attendance_date)}">Ver</button></td></tr>`).join('') || '<tr><td colspan="7" class="empty">Nenhuma chamada encontrada.</td></tr>';
   } catch (err) { toast(err.message, true); }
 }
 
@@ -123,7 +133,7 @@ async function loadHistory(page = 1) {
 async function loadUsers() {
   try {
     const users = await api('users');
-    document.getElementById('users-table').innerHTML = users.map(u => `<tr><td>${u.display_name}</td><td>${u.username}</td><td>${u.is_admin ? 'Sim' : 'Nao'}</td><td>${u.active ? 'Sim' : 'Nao'}</td><td></td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nenhum usuario.</td></tr>';
+    document.getElementById('users-table').innerHTML = users.map(u => `<tr><td>${escapeHtml(u.display_name)}</td><td>${escapeHtml(u.username)}</td><td>${u.is_admin ? 'Sim' : 'Nao'}</td><td>${u.active ? 'Sim' : 'Nao'}</td><td></td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nenhum usuario.</td></tr>';
   } catch (err) { /* ignore if not admin */ }
 }
 
@@ -131,10 +141,10 @@ async function loadUsers() {
 async function fillFilters() {
   try {
     const courses = await api('courses');
-    document.getElementById('filter-course').innerHTML = `<option value="">Todas as turmas</option>` + courses.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
-    document.getElementById('report-course').innerHTML = `<option value="">Todas as turmas</option>` + courses.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
+    document.getElementById('filter-course').innerHTML = `<option value="">Todas as turmas</option>` + courses.map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
+    document.getElementById('report-course').innerHTML = `<option value="">Todas as turmas</option>` + courses.map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
     const users = await api('users').catch(() => []);
-    document.getElementById('filter-user').innerHTML = `<option value="">Todos os responsaveis</option>` + users.map(u => `<option value="${u.id}">${u.display_name || u.username}</option>`).join('');
+    document.getElementById('filter-user').innerHTML = `<option value="">Todos os responsaveis</option>` + users.map(u => `<option value="${u.id}">${escapeHtml(u.display_name || u.username)}</option>`).join('');
   } catch (err) { console.error(err); }
 }
 
@@ -175,7 +185,7 @@ document.addEventListener('click', async (e) => {
     const date = btn.dataset.detailDate;
     try {
       const resp = await api(`history/detail?course_id=${course}&date=${date}`);
-      const list = resp.data.map(item => `<div><strong>${item.student_name}</strong> — ${item.status} ${item.note ? `(${item.note})` : ''} <small>${item.recorded_at} por ${item.recorded_by_user || ''}</small></div>`).join('');
+      const list = resp.data.map(item => `<div><strong>${escapeHtml(item.student_name)}</strong> — ${escapeHtml(item.status)} ${item.note ? `(${escapeHtml(item.note)})` : ''} <small>${escapeHtml(item.recorded_at)} por ${escapeHtml(item.recorded_by_user || '')}</small></div>`).join('');
       alert(`Detalhes ${date} - ${list}`);
     } catch (err) { toast(err.message, true); }
   }
@@ -199,7 +209,7 @@ async function postLoadSetup() {
 
 // call after successful start/load
 // start() calls load(), which returns early if not authenticated. so we call postLoadSetup inside start after load.
-function fillSelect(selector, items, placeholder) { $(selector).innerHTML = `<option value="">${placeholder}</option>` + items.map(item => `<option value="${item.id}">${item.name || item.title}</option>`).join(''); }
+function fillSelect(selector, items, placeholder) { $(selector).innerHTML = `<option value="">${escapeHtml(placeholder)}</option>` + items.map(item => `<option value="${item.id}">${escapeHtml(item.name || item.title)}</option>`).join(''); }
 function formatDate(date) { return new Date(`${date}T12:00:00`).toLocaleDateString('pt-BR'); }
 function showView(view) { document.querySelectorAll('.view').forEach(item => item.classList.toggle('active-view', item.id === view)); document.querySelectorAll('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.view === view)); $('#page-title').textContent = { overview: 'Visao geral', students: 'Alunos', courses: 'Cursos', attendance: 'Presencas' }[view]; }
 function toast(message, error = false) { const element = $('#toast'); element.textContent = message; element.className = `toast visible ${error ? 'error' : ''}`; setTimeout(() => element.className = 'toast', 2800); }
