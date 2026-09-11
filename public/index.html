@@ -13,16 +13,25 @@
   <aside class="sidebar">
     <div class="brand"><span class="brand-mark">P</span><span>presenca</span></div>
     <nav>
-      <button class="nav-item active" data-view="overview"><span>◈</span> Visao geral</button>
+      <button class="nav-item active" data-view="overview"><span>◈</span> Dashboard</button>
       <button class="nav-item" data-view="students"><span>◎</span> Alunos</button>
-      <button class="nav-item" data-view="courses"><span>▦</span> Cursos</button>
-      <button class="nav-item" data-view="attendance"><span>✓</span> Presencas</button>
+      <button class="nav-item" data-view="courses"><span>▦</span> Turmas</button>
+      <button class="nav-item" data-view="attendance"><span>✓</span> Chamadas</button>
+      <button class="nav-item" data-view="history"><span>◴</span> Historico</button>
+      <button class="nav-item" data-view="reports"><span>█</span> Relatorios</button>
+      <button class="nav-item" data-view="users" id="nav-users" style="display:none"><span>👥</span> Usuarios</button>
+      <button class="nav-item" data-view="audit" id="nav-audit" style="display:none"><span>🔍</span> Auditoria</button>
+      <button class="nav-item" data-view="profile"><span>☺</span> Meu Perfil</button>
     </nav>
-    <div class="sidebar-footer"><small>PAINEL ACADEMICO</small><p>Organize sua turma com clareza.</p></div>
+    <div class="sidebar-footer"><small>PAINEL ACADEMICO</small><p>Organize sua turma com clareza.</p>
+      <div style="margin-top:8px"><button class="text-button" data-open="login-modal">Entrar</button></div>
+    </div>
   </aside>
+  <!-- Overlay usado para ocultar a aplicação durante telas de autenticação -->
+  <div id="auth-overlay" aria-hidden="true"></div>
 
   <main class="content">
-    <header class="topbar"><div><p class="eyebrow">QUARTA-FEIRA, 19 DE AGOSTO</p><h1 id="page-title">Visao geral</h1></div><div class="status-dot"><i></i> Sistema online</div></header>
+    <header class="topbar"><div><p class="eyebrow">QUARTA-FEIRA, 19 DE AGOSTO</p><h1 id="page-title">Visao geral</h1></div><div style="display:flex;align-items:center;gap:12px"><div id="user-info" style="display:flex;flex-direction:column;text-align:right"><small id="user-name"></small><a href="#" id="logout-link" style="font-size:12px;display:none">Sair</a></div><div class="status-dot"><i></i> Sistema online</div></div></header>
     <section id="overview" class="view active-view">
       <div class="welcome"><div><span class="eyebrow">ACOMPANHAMENTO EM UM SO LUGAR</span><h2>Uma turma presente<br><em>comeca aqui.</em></h2><p>Cadastre alunos, organize cursos e acompanhe a frequencia do seu jeito.</p></div><div class="welcome-shape">✦</div></div>
       <div class="stats"><article><span class="stat-icon coral">◎</span><div><small>ALUNOS ATIVOS</small><strong id="student-count">0</strong></div></article><article><span class="stat-icon blue">▦</span><div><small>CURSOS</small><strong id="course-count">0</strong></div></article><article><span class="stat-icon green">✓</span><div><small>PRESENCAS</small><strong id="present-count">0</strong></div></article><article><span class="stat-icon yellow">!</span><div><small>AUSENCIAS</small><strong id="absent-count">0</strong></div></article></div>
@@ -31,10 +40,27 @@
     <section id="students" class="view"><div class="section-head"><div><span class="eyebrow">CADASTRO</span><h2>Alunos</h2></div><button class="primary" data-open="student-modal">+ Novo aluno</button></div><div class="panel table-panel"><table><thead><tr><th>Nome</th><th>Idade</th><th>E-mail</th><th></th></tr></thead><tbody id="students-table"></tbody></table></div></section>
     <section id="courses" class="view"><div class="section-head"><div><span class="eyebrow">CATALOGO</span><h2>Cursos</h2></div><button class="primary" data-open="course-modal">+ Novo curso</button></div><div class="course-grid" id="courses-grid"></div></section>
     <section id="attendance" class="view"><div class="section-head"><div><span class="eyebrow">HISTORICO</span><h2>Presencas</h2></div></div><div class="panel table-panel"><table><thead><tr><th>Data</th><th>Aluno</th><th>Curso</th><th>Status</th></tr></thead><tbody id="attendance-table"></tbody></table></div></section>
+    <section id="history" class="view"><div class="section-head"><div><span class="eyebrow">HISTORICO</span><h2>Historico de Chamadas</h2></div></div><div class="panel table-panel"><div style="display:flex;gap:8px;margin-bottom:12px"><input type="date" id="filter-start"><input type="date" id="filter-end"><select id="filter-course"><option value="">Todas as turmas</option></select><select id="filter-user"><option value="">Todos os responsaveis</option></select><select id="filter-status"><option value="">Todos</option><option value="present">Presente</option><option value="absent">Ausente</option></select><button id="apply-filters" class="primary">Filtrar</button><button id="clear-filters" class="text-button">Limpar</button></div><table><thead><tr><th>Data</th><th>Turma</th><th>Presentes</th><th>Faltantes</th><th>%</th><th>Responsavel</th><th></th></tr></thead><tbody id="history-table"></tbody></table></div></section>
+    <section id="reports" class="view"><div class="section-head"><div><span class="eyebrow">RELATORIOS</span><h2>Relatorios</h2></div></div><div class="panel"><div style="display:flex;gap:8px;margin-bottom:12px"><input type="date" id="report-start"><input type="date" id="report-end"><select id="report-course"><option value="">Todas as turmas</option></select><button id="export-csv" class="primary">Exportar CSV</button></div><div id="report-summary"></div></div></section>
+    <section id="users" class="view"><div class="section-head"><div><span class="eyebrow">USUARIOS</span><h2>Gerenciar Usuarios</h2></div></div><div class="panel table-panel"><table><thead><tr><th>Nome</th><th>Username</th><th>Admin</th><th>Ativo</th><th></th></tr></thead><tbody id="users-table"></tbody></table></div></section>
+    <section id="audit" class="view"><div class="section-head"><div><span class="eyebrow">SEGURANCA</span><h2>Auditoria</h2></div></div><div class="panel table-panel"><table><thead><tr><th>Data</th><th>Acao</th><th>Responsavel</th><th>Aluno</th><th>Curso</th><th>Status</th></tr></thead><tbody id="audit-table"></tbody></table></div></section>
+    <section id="profile" class="view"><div class="section-head"><div><span class="eyebrow">MEU PERFIL</span><h2>Perfil</h2></div></div><div class="panel"><p id="profile-info"></p><button id="change-password" class="primary">Alterar senha</button></div></section>
   </main>
   <div id="toast" class="toast"></div>
   <dialog id="student-modal"><form method="dialog" id="student-form"><button class="close" value="cancel">×</button><span class="eyebrow">NOVO CADASTRO</span><h2>Adicionar aluno</h2><label>Nome<input name="name" required placeholder="Nome completo"></label><label>Idade<input name="age" type="number" min="1" max="129" required placeholder="18"></label><label>E-mail<input name="email" type="email" required placeholder="aluno@email.com"></label><button class="primary" type="submit">Cadastrar aluno</button></form></dialog>
+  <dialog id="login-modal"><form method="dialog" id="login-form"><button class="close" value="cancel">×</button><span class="eyebrow">ACESSO</span><h2>Entrar como responsável</h2><label>Usuário<input name="username" required placeholder="usuario"></label><label>Senha<input name="password" type="password" required placeholder="senha"></label><div style="display:flex;gap:8px"><button class="primary" type="submit">Entrar</button><button class="text-button" type="button" id="open-register">Criar conta</button></div></form></dialog>
+  <script>
+    // small inline helper so the register button can open the register modal
+    document.addEventListener('click', (e) => {
+      if (e.target && e.target.id === 'open-register') {
+        document.getElementById('login-modal')?.close();
+        if (window.showAuthModal) window.showAuthModal('register-modal'); else document.getElementById('register-modal')?.showModal();
+      }
+    });
+  </script>
+  <dialog id="register-modal"><form method="dialog" id="register-form"><button class="close" value="cancel">×</button><span class="eyebrow">CRIAR CONTA</span><h2>Cadastro de responsável</h2><label>Nome completo<input name="display_name" required placeholder="Nome completo"></label><label>E-mail ou usuário<input name="username" required placeholder="usuario@exemplo.com"></label><label>Senha<input name="password" type="password" required placeholder="Senha (min 6 caracteres)"></label><label>Confirmar senha<input name="password_confirm" type="password" required placeholder="Repita a senha"></label><div style="display:flex;gap:8px"><button class="primary" type="submit">Criar conta</button><button class="text-button" type="button" id="cancel-register">Cancelar</button></div></form></dialog>
   <dialog id="course-modal"><form method="dialog" id="course-form"><button class="close" value="cancel">×</button><span class="eyebrow">NOVO CURSO</span><h2>Adicionar curso</h2><label>Titulo<input name="title" required placeholder="Ex.: Matematica aplicada"></label><label>Duracao (horas)<input name="duration" type="number" min="1" required placeholder="40"></label><label>Descricao<textarea name="description" placeholder="Uma breve descricao"></textarea></label><button class="primary" type="submit">Cadastrar curso</button></form></dialog>
+  <dialog id="password-modal"><form method="dialog" id="password-form"><button class="close" value="cancel">×</button><span class="eyebrow">SEGURANCA</span><h2>Alterar senha</h2><label>Senha atual<input name="current_password" type="password" required></label><label>Nova senha<input name="new_password" type="password" minlength="6" required></label><label>Confirmar nova senha<input name="new_password_confirm" type="password" minlength="6" required></label><button class="primary" type="submit">Salvar senha</button></form></dialog>
   <script src="/app.js"></script>
 </body>
 </html>
