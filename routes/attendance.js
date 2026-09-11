@@ -19,28 +19,31 @@ router.get('/', (req, res) => {
 
 router.post('/', (req, res) => {
   const { student_id, course_id, attendance_date, status, note } = req.body;
-  if (!student_id || !course_id || !attendance_date || !['present', 'absent'].includes(status)) {
+  const studentId = Number(student_id);
+  const courseId = Number(course_id);
+  const parsedDate = typeof attendance_date === 'string' ? new Date(`${attendance_date}T00:00:00Z`) : null;
+  const validDate = typeof attendance_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(attendance_date) && parsedDate && !Number.isNaN(parsedDate.getTime()) && parsedDate.toISOString().startsWith(`${attendance_date}T`);
+  if (!Number.isInteger(studentId) || studentId < 1 || !Number.isInteger(courseId) || courseId < 1 || !validDate || !['present', 'absent'].includes(status)) {
     return res.status(400).json({ error: 'Aluno, curso, data e status sao obrigatorios.' });
   }
   // Prevent future dates
-  const today = new Date();
-  const provided = new Date(`${attendance_date}T00:00:00`);
-  if (provided > new Date(today.toDateString())) {
+  const today = new Date().toISOString().split('T')[0];
+  if (attendance_date > today) {
     return res.status(400).json({ error: 'Nao e possivel registrar presenca para data futura.' });
   }
   // Check existing record to determine create/update for audit
-  const existing = db.get('SELECT * FROM attendance WHERE student_id = ? AND course_id = ? AND attendance_date = ?', [student_id, course_id, attendance_date]);
+  const existing = db.get('SELECT * FROM attendance WHERE student_id = ? AND course_id = ? AND attendance_date = ?', [studentId, courseId, attendance_date]);
   const timestamp = new Date().toISOString();
   if (existing) {
     // update
-    db.run('UPDATE attendance SET status = ?, recorded_by = ?, recorded_at = ?, note = ? WHERE id = ?', [status, req.user.id, timestamp, note || null, existing.id]);
-    db.run('INSERT INTO attendance_audit (attendance_id, action, user_id, student_id, course_id, attendance_date, status, previous_status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [existing.id, 'updated', req.user.id, student_id, course_id, attendance_date, status, existing.status, timestamp]);
+    db.run('UPDATE attendance SET status = ?, recorded_by = ?, recorded_at = ?, note = ? WHERE id = ?', [status, req.user.id, timestamp, typeof note === 'string' ? note.trim() || null : null, existing.id]);
+    db.run('INSERT INTO attendance_audit (attendance_id, action, user_id, student_id, course_id, attendance_date, status, previous_status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [existing.id, 'updated', req.user.id, studentId, courseId, attendance_date, status, existing.status, timestamp]);
     return res.status(200).json({ message: 'Presenca atualizada.' });
   } else {
     // create
-    const result = db.run('INSERT INTO attendance (student_id, course_id, attendance_date, status, recorded_by, recorded_at, note) VALUES (?, ?, ?, ?, ?, ?, ?)', [student_id, course_id, attendance_date, status, req.user.id, timestamp, note || null]);
+    const result = db.run('INSERT INTO attendance (student_id, course_id, attendance_date, status, recorded_by, recorded_at, note) VALUES (?, ?, ?, ?, ?, ?, ?)', [studentId, courseId, attendance_date, status, req.user.id, timestamp, typeof note === 'string' ? note.trim() || null : null]);
     const insertedId = result.lastInsertRowid;
-    db.run('INSERT INTO attendance_audit (attendance_id, action, user_id, student_id, course_id, attendance_date, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [insertedId, 'created', req.user.id, student_id, course_id, attendance_date, status, timestamp]);
+    db.run('INSERT INTO attendance_audit (attendance_id, action, user_id, student_id, course_id, attendance_date, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [insertedId, 'created', req.user.id, studentId, courseId, attendance_date, status, timestamp]);
     return res.status(201).json({ message: 'Presenca registrada.' });
   }
 });
