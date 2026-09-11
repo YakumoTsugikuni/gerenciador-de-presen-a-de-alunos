@@ -36,14 +36,17 @@ router.post('/', (req, res) => {
   const timestamp = new Date().toISOString();
   if (existing) {
     // update
-    db.run('UPDATE attendance SET status = ?, recorded_by = ?, recorded_at = ?, note = ? WHERE id = ?', [status, req.user.id, timestamp, typeof note === 'string' ? note.trim() || null : null, existing.id]);
-    db.run('INSERT INTO attendance_audit (attendance_id, action, user_id, student_id, course_id, attendance_date, status, previous_status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [existing.id, 'updated', req.user.id, studentId, courseId, attendance_date, status, existing.status, timestamp]);
+    db.transaction(() => {
+      db.run('UPDATE attendance SET status = ?, recorded_by = ?, recorded_at = ?, note = ? WHERE id = ?', [status, req.user.id, timestamp, typeof note === 'string' ? note.trim() || null : null, existing.id]);
+      db.run('INSERT INTO attendance_audit (attendance_id, action, user_id, student_id, course_id, attendance_date, status, previous_status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [existing.id, 'updated', req.user.id, studentId, courseId, attendance_date, status, existing.status, timestamp]);
+    });
     return res.status(200).json({ message: 'Presenca atualizada.' });
   } else {
     // create
-    const result = db.run('INSERT INTO attendance (student_id, course_id, attendance_date, status, recorded_by, recorded_at, note) VALUES (?, ?, ?, ?, ?, ?, ?)', [studentId, courseId, attendance_date, status, req.user.id, timestamp, typeof note === 'string' ? note.trim() || null : null]);
-    const insertedId = result.lastInsertRowid;
-    db.run('INSERT INTO attendance_audit (attendance_id, action, user_id, student_id, course_id, attendance_date, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [insertedId, 'created', req.user.id, studentId, courseId, attendance_date, status, timestamp]);
+    db.transaction(() => {
+      const result = db.run('INSERT INTO attendance (student_id, course_id, attendance_date, status, recorded_by, recorded_at, note) VALUES (?, ?, ?, ?, ?, ?, ?)', [studentId, courseId, attendance_date, status, req.user.id, timestamp, typeof note === 'string' ? note.trim() || null : null]);
+      db.run('INSERT INTO attendance_audit (attendance_id, action, user_id, student_id, course_id, attendance_date, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [result.lastInsertRowid, 'created', req.user.id, studentId, courseId, attendance_date, status, timestamp]);
+    });
     return res.status(201).json({ message: 'Presenca registrada.' });
   }
 });
@@ -52,9 +55,11 @@ router.delete('/:id', (req, res) => {
   const id = req.params.id;
   const existing = db.get('SELECT * FROM attendance WHERE id = ?', [id]);
   if (!existing) return res.status(404).json({ error: 'Registro nao encontrado.' });
-  db.run('DELETE FROM attendance WHERE id = ?', [id]);
   const timestamp = new Date().toISOString();
-  db.run('INSERT INTO attendance_audit (attendance_id, action, user_id, student_id, course_id, attendance_date, status, previous_status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [id, 'deleted', req.user.id, existing.student_id, existing.course_id, existing.attendance_date, null, existing.status, timestamp]);
+  db.transaction(() => {
+    db.run('DELETE FROM attendance WHERE id = ?', [id]);
+    db.run('INSERT INTO attendance_audit (attendance_id, action, user_id, student_id, course_id, attendance_date, status, previous_status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [id, 'deleted', req.user.id, existing.student_id, existing.course_id, existing.attendance_date, null, existing.status, timestamp]);
+  });
   res.status(204).end();
 });
 

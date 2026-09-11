@@ -5,6 +5,7 @@ const dataDirectory = path.join(__dirname, 'data');
 fs.mkdirSync(dataDirectory, { recursive: true });
 const databaseFile = path.join(dataDirectory, 'presenca.sqlite');
 let database;
+let transactionDepth = 0;
 
 async function initialize() {
   const initSqlJs = require('sql.js');
@@ -155,8 +156,27 @@ function run(sql, params = []) {
   database.run(sql, params);
   const changes = database.getRowsModified();
   const id = get('SELECT last_insert_rowid() AS id')?.id;
-  save();
+  if (transactionDepth === 0) save();
   return { lastInsertRowid: id, changes };
 }
 
-module.exports = { initialize, all, get, run };
+function transaction(callback) {
+  const outerTransaction = transactionDepth === 0;
+  if (outerTransaction) database.run('BEGIN');
+  transactionDepth += 1;
+  try {
+    const result = callback();
+    transactionDepth -= 1;
+    if (outerTransaction) {
+      database.run('COMMIT');
+      save();
+    }
+    return result;
+  } catch (error) {
+    transactionDepth -= 1;
+    if (outerTransaction) database.run('ROLLBACK');
+    throw error;
+  }
+}
+
+module.exports = { initialize, all, get, run, transaction };
