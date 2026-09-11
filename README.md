@@ -7,19 +7,21 @@ O que faz
 ---------
 - Registrar presenças por aluno e por data.
 - Gerenciar listas de cursos e alunos.
-- Interface web mínima para visualização e interação.
+- Interface web para dashboard, cadastro, chamadas, histórico e relatórios CSV.
+- Contas de responsáveis, sessão por cookie HttpOnly e auditoria para administradores.
 
 Principais arquivos e pastas
 ---------------------------
 - `server.js` - Ponto de entrada do servidor.
 - `db.js` - Lógica de persistência/abstração de dados (usa a pasta `data/`).
-- `routes/` - Rotas Express para `attendance`, `courses` e `students`.
+- `routes/` - Rotas Express para autenticação, alunos, cursos, presenças, histórico, relatórios, usuários e auditoria.
 - `public/` - Frontend estático (HTML, CSS, JS).
-- `data/` - Armazenamento local de dados (JSON ou arquivos usados pelo projeto).
+- `data/` - Banco SQLite local, ignorado pelo Git.
+- `test/` - Testes automatizados executados com `npm test`.
 
 Requisitos
 ----------
-- Node.js (versão 14+ recomendada)
+- Node.js 18 ou superior
 - npm
 
 Instalação e execução
@@ -46,9 +48,10 @@ Como contribuir
 - Para mudanças grandes, abra uma issue descrevendo a proposta antes de implementar.
 
 Notas de desenvolvimento
------------------------
-- O projeto foi organizado para ser simples; sinta-se à vontade para extrair módulos, adicionar testes automatizados e melhorar a estrutura de dados.
-- Se precisar de persistência mais robusta, substitua a pasta `data/` por um banco (SQLite, PostgreSQL, etc.) e atualize `db.js`.
+------------------------
+- O banco é carregado pelo `sql.js` em memória e exportado para `data/presenca.sqlite` após alterações.
+- Execute `npm test` antes de enviar mudanças.
+- Para maior concorrência ou volume, considere migrar `db.js` para SQLite nativo, PostgreSQL ou outro banco transacional.
 
 Licença
 -------
@@ -60,15 +63,15 @@ Se precisar de ajuda com a configuração ou quiser orientações para estender 
 
 Atualizações recentes
 ---------------------
-- Implementado: autenticação (login/registro), auditoria de alterações de presença, dashboard, histórico e relatórios com exportação CSV.
-- Validação de datas: o sistema impede registrar/alterar presenças para datas futuras (validação no frontend e backend).
+- Implementado: autenticação, cadastro, dashboard, histórico, relatórios CSV, auditoria e alteração de senha.
+- Sessões usam cookies HttpOnly; tokens Bearer continuam aceitos para compatibilidade com clientes externos.
+- Presenças não podem ser registradas para datas futuras ou inexistentes.
 
 Configuração importante
 -----------------------
-- Defina variáveis de ambiente para produção/segurança antes de executar o servidor:
-	- `JWT_SECRET` — segredo para assinar tokens JWT (obrigatório em produção).
-	- `FIRST_ADMIN_USERNAME` e `FIRST_ADMIN_PASSWORD` — (opcional) criar o usuário admin inicial no primeiro start.
-- O arquivo de banco de dados local está em `data/presenca.sqlite`. Por padrão foi adicionado ao `.gitignore` para não ser comitado.
+- Em produção, defina `JWT_SECRET`, `FIRST_ADMIN_USERNAME` e `FIRST_ADMIN_PASSWORD` antes de executar o servidor.
+- Em desenvolvimento, o segredo JWT é gerado aleatoriamente e uma senha temporária é exibida no terminal apenas ao criar ou migrar o administrador inicial.
+- O arquivo de banco de dados local está em `data/presenca.sqlite` e é ignorado pelo Git.
 
 Comandos úteis
 ---------------
@@ -84,6 +87,12 @@ npm install
 npm run dev
 # ou
 node server.js
+```
+
+- Executar testes:
+
+```bash
+npm test
 ```
 
 Notas sobre branches e commits
