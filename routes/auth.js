@@ -2,9 +2,8 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const db = require('../db');
+const { jwtSecret } = require('../config/auth');
 const router = express.Router();
-
-const SECRET = process.env.JWT_SECRET || 'dev_secret_change_this';
 
 router.post('/login', (req, res) => {
   const { username, password } = req.body;
@@ -13,7 +12,7 @@ router.post('/login', (req, res) => {
   if (!user) return res.status(401).json({ error: 'Usuario ou senha invalidos.' });
   const ok = bcrypt.compareSync(password, user.password);
   if (!ok) return res.status(401).json({ error: 'Usuario ou senha invalidos.' });
-  const token = jwt.sign({ id: user.id, username: user.username }, SECRET, { expiresIn: '8h' });
+  const token = jwt.sign({ id: user.id, username: user.username }, jwtSecret, { expiresIn: '8h' });
   res.json({ token, user: { id: user.id, username: user.username, display_name: user.display_name, is_admin: !!user.is_admin } });
 });
 
@@ -41,7 +40,7 @@ router.get('/me', (req, res) => {
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
   if (!token) return res.status(200).json({ user: null });
   try {
-    const payload = jwt.verify(token, SECRET);
+    const payload = jwt.verify(token, jwtSecret);
     const user = db.get('SELECT id, username, display_name, is_admin FROM users WHERE id = ?', [payload.id]);
     if (user) user.is_admin = !!user.is_admin;
     res.json({ user: user || null });

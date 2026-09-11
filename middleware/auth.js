@@ -1,14 +1,13 @@
 const jwt = require('jsonwebtoken');
 const db = require('../db');
-
-const SECRET = process.env.JWT_SECRET || 'dev_secret_change_this';
+const { jwtSecret } = require('../config/auth');
 
 function authMiddleware(req, res, next) {
   const auth = req.headers.authorization || '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
   if (!token) return res.status(401).json({ error: 'Token ausente.' });
   try {
-    const payload = jwt.verify(token, SECRET);
+    const payload = jwt.verify(token, jwtSecret);
     // Attach user info (minimal) to req.user
     const user = db.get('SELECT id, username, display_name, is_admin FROM users WHERE id = ?', [payload.id]);
     if (!user) return res.status(401).json({ error: 'Usuario invalido.' });

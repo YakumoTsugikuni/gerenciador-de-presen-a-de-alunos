@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const dataDirectory = path.join(__dirname, 'data');
 fs.mkdirSync(dataDirectory, { recursive: true });
 const databaseFile = path.join(dataDirectory, 'presenca.sqlite');
@@ -94,22 +95,38 @@ async function initialize() {
       s.free();
       return r;
     })();
+    const bcrypt = require('bcryptjs');
+    const envUser = process.env.FIRST_ADMIN_USERNAME;
+    const envPass = process.env.FIRST_ADMIN_PASSWORD;
     if (row.c === 0) {
-      const bcrypt = require('bcryptjs');
-      const envUser = process.env.FIRST_ADMIN_USERNAME;
-      const envPass = process.env.FIRST_ADMIN_PASSWORD;
+      if (process.env.NODE_ENV === 'production' && (!envUser || !envPass)) {
+        throw new Error('FIRST_ADMIN_USERNAME e FIRST_ADMIN_PASSWORD precisam ser configurados em producao.');
+      }
+      const username = envUser || 'admin';
+      const password = envPass || crypto.randomBytes(18).toString('base64url');
+      const hash = bcrypt.hashSync(password, 10);
+      database.run('INSERT INTO users (username, password, display_name, is_admin) VALUES (?, ?, ?, ?)', [username, hash, 'Administrador', 1]);
       if (envUser && envPass) {
-        const hash = bcrypt.hashSync(envPass, 10);
-        database.run('INSERT INTO users (username, password, display_name, is_admin) VALUES (?, ?, ?, ?)', [envUser, hash, 'Administrador', 1]);
         console.log('Admin user created from FIRST_ADMIN_* environment variables.');
       } else {
-        const hash = bcrypt.hashSync('admin', 10);
-        database.run('INSERT INTO users (username, password, display_name, is_admin) VALUES (?, ?, ?, ?)', ['admin', hash, 'Administrador', 1]);
-        console.warn('Default admin created with username "admin" and password "admin" — please change immediately or set FIRST_ADMIN_USERNAME/FIRST_ADMIN_PASSWORD.');
+        console.warn(`Admin de desenvolvimento criado. Usuario: ${username}; senha temporaria: ${password}`);
       }
+    } else {
+      const defaultAdmin = database.prepare('SELECT id, password FROM users WHERE username = ?');
+      defaultAdmin.bind(['admin']);
+      if (defaultAdmin.step()) {
+        const admin = defaultAdmin.getAsObject();
+        if (bcrypt.compareSync('admin', admin.password)) {
+          const password = crypto.randomBytes(18).toString('base64url');
+          database.run('UPDATE users SET password = ? WHERE id = ?', [bcrypt.hashSync(password, 10), admin.id]);
+          console.warn(`A senha padrao do admin foi substituida. Nova senha temporaria: ${password}`);
+        }
+      }
+      defaultAdmin.free();
     }
   } catch (err) {
-    // ignore seeding errors
+    if (process.env.NODE_ENV === 'production') throw err;
+    console.warn(`Nao foi possivel configurar o usuario admin: ${err.message}`);
   }
   database.run(`
     DELETE FROM attendance
