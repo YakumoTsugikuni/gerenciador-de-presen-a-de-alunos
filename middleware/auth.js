@@ -1,10 +1,9 @@
 const jwt = require('jsonwebtoken');
 const db = require('../db');
-const { jwtSecret } = require('../config/auth');
+const { jwtSecret, getToken } = require('../config/auth');
 
 function authMiddleware(req, res, next) {
-  const auth = req.headers.authorization || '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  const token = getToken(req);
   if (!token) return res.status(401).json({ error: 'Token ausente.' });
   try {
     const payload = jwt.verify(token, jwtSecret);

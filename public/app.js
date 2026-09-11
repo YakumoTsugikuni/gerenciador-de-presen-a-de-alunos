@@ -45,9 +45,7 @@ window.hideAuthOverlay = function() {
   m?.classList.remove('blurred'); a?.classList.remove('blurred');
 };
 const api = async (url, options = {}) => {
-  const token = localStorage.getItem('token');
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
   const response = await fetch(`/api/${url}`, { headers, ...options });
   const data = response.status === 204 ? null : await response.json();
   if (!response.ok) throw new Error(data?.error || 'Ocorreu um erro.');
@@ -158,8 +156,7 @@ document.getElementById('export-csv')?.addEventListener('click', async () => {
   if (end) q.set('end_date', end);
   if (course) q.set('course_id', course);
   try {
-    const token = localStorage.getItem('token');
-    const resp = await fetch(`/api/reports/export?${q.toString()}`, { headers: { Authorization: `Bearer ${token}` } });
+    const resp = await fetch(`/api/reports/export?${q.toString()}`);
     if (!resp.ok) throw new Error('Falha ao gerar CSV');
     const blob = await resp.blob();
     const url = URL.createObjectURL(blob);
@@ -237,7 +234,6 @@ if (loginForm) loginForm.addEventListener('submit', async (e) => {
   const payload = Object.fromEntries(new FormData(loginForm));
   try {
     const resp = await api('auth/login', { method: 'POST', body: JSON.stringify(payload) });
-    localStorage.setItem('token', resp.token);
     loginForm.closest('dialog')?.close();
     loginForm.reset();
     await load();
@@ -291,7 +287,7 @@ setDateMax();
 // logout link
   document.getElementById('logout-link')?.addEventListener('click', (e) => {
   e.preventDefault();
-  localStorage.removeItem('token');
+  api('auth/logout', { method: 'POST' }).catch(() => {});
   state.user = null;
   document.getElementById('user-name').textContent = '';
   document.getElementById('logout-link').style.display = 'none';

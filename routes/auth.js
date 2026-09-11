@@ -2,7 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const db = require('../db');
-const { jwtSecret } = require('../config/auth');
+const { jwtSecret, getToken, setAuthCookie, clearAuthCookie } = require('../config/auth');
 const router = express.Router();
 
 router.post('/login', (req, res) => {
@@ -13,7 +13,8 @@ router.post('/login', (req, res) => {
   const ok = bcrypt.compareSync(password, user.password);
   if (!ok) return res.status(401).json({ error: 'Usuario ou senha invalidos.' });
   const token = jwt.sign({ id: user.id, username: user.username }, jwtSecret, { expiresIn: '8h' });
-  res.json({ token, user: { id: user.id, username: user.username, display_name: user.display_name, is_admin: !!user.is_admin } });
+  setAuthCookie(res, token);
+  res.json({ user: { id: user.id, username: user.username, display_name: user.display_name, is_admin: !!user.is_admin } });
 });
 
 router.post('/register', (req, res) => {
@@ -36,8 +37,7 @@ router.post('/register', (req, res) => {
 });
 
 router.get('/me', (req, res) => {
-  const auth = req.headers.authorization || '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  const token = getToken(req);
   if (!token) return res.status(200).json({ user: null });
   try {
     const payload = jwt.verify(token, jwtSecret);
@@ -47,6 +47,11 @@ router.get('/me', (req, res) => {
   } catch (err) {
     res.status(200).json({ user: null });
   }
+});
+
+router.post('/logout', (req, res) => {
+  clearAuthCookie(res);
+  res.status(204).end();
 });
 
 module.exports = router;
