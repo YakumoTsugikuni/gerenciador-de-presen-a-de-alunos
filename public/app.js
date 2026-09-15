@@ -62,6 +62,10 @@ function escapeHtml(value) {
   })[character]);
 }
 
+function isMakeupNote(note) {
+  return typeof note === 'string' && /^reposicao de aula\b/i.test(note.trim());
+}
+
 async function load() {
   // require authentication first
   try {
@@ -86,8 +90,16 @@ async function load() {
 function render() {
   $('#students-table').innerHTML = state.students.map(student => `<tr><td><strong>${escapeHtml(student.name)}</strong></td><td>${escapeHtml(student.age)} anos</td><td>${escapeHtml(student.email)}</td><td><button class="icon-button" data-delete-student="${student.id}" title="Excluir aluno">×</button></td></tr>`).join('') || '<tr><td colspan="4" class="empty">Nenhum aluno cadastrado.</td></tr>';
   $('#courses-grid').innerHTML = state.courses.map(course => `<article class="course-card"><div class="course-number">${String(course.id).padStart(2, '0')}</div><div><h3>${escapeHtml(course.title)}</h3><p>${escapeHtml(course.description || 'Sem descricao cadastrada.')}</p><span>${escapeHtml(course.duration)} horas</span></div><button class="icon-button" data-delete-course="${course.id}" title="Excluir curso">×</button></article>`).join('') || '<p class="empty">Nenhum curso cadastrado.</p>';
-  $('#attendance-table').innerHTML = state.attendance.map(item => `<tr><td>${escapeHtml(formatDate(item.attendance_date))}</td><td><strong>${escapeHtml(item.student_name)}</strong></td><td>${escapeHtml(item.course_title)}</td><td><span class="badge ${escapeHtml(item.status)}">${item.status === 'present' ? 'Presente' : 'Ausente'}</span></td></tr>`).join('') || '<tr><td colspan="4" class="empty">Nenhuma presenca registrada.</td></tr>';
-  $('#recent-list').innerHTML = state.attendance.slice(0, 4).map(item => `<div class="record"><span class="record-avatar">${escapeHtml(item.student_name?.charAt(0))}</span><div><strong>${escapeHtml(item.student_name)}</strong><small>${escapeHtml(item.course_title)} · ${escapeHtml(formatDate(item.attendance_date))}</small></div><span class="badge ${escapeHtml(item.status)}">${item.status === 'present' ? 'Presente' : 'Ausente'}</span></div>`).join('') || '<p class="empty">Nenhum registro ainda.</p>';
+  $('#attendance-table').innerHTML = state.attendance.map(item => {
+    const makeup = isMakeupNote(item.note);
+    const label = item.status === 'present' ? (makeup ? 'Presente (Reposicao)' : 'Presente') : 'Ausente';
+    return `<tr><td>${escapeHtml(formatDate(item.attendance_date))}</td><td><strong>${escapeHtml(item.student_name)}</strong></td><td>${escapeHtml(item.course_title)}</td><td><span class="badge ${escapeHtml(item.status)}">${escapeHtml(label)}</span></td></tr>`;
+  }).join('') || '<tr><td colspan="4" class="empty">Nenhuma presenca registrada.</td></tr>';
+  $('#recent-list').innerHTML = state.attendance.slice(0, 4).map(item => {
+    const makeup = isMakeupNote(item.note);
+    const label = item.status === 'present' ? (makeup ? 'Reposicao' : 'Presente') : 'Ausente';
+    return `<div class="record"><span class="record-avatar">${escapeHtml(item.student_name?.charAt(0))}</span><div><strong>${escapeHtml(item.student_name)}</strong><small>${escapeHtml(item.course_title)} · ${escapeHtml(formatDate(item.attendance_date))}</small></div><span class="badge ${escapeHtml(item.status)}">${escapeHtml(label)}</span></div>`;
+  }).join('') || '<p class="empty">Nenhum registro ainda.</p>';
   fillSelect('#attendance-student', state.students, 'Selecione um aluno'); fillSelect('#attendance-course', state.courses, 'Selecione um curso');
 }
 
